@@ -915,15 +915,19 @@ static void update_options(struct vo *vo)
 static void apply_target_contrast(struct priv *p, struct pl_color_space *color, float min_luma)
 {
     const struct gl_video_opts *opts = p->opts_cache->opts;
+    int contrast = opts->target_contrast;
+
+    if (opts->target_contrast_hdr && pl_color_space_is_hdr(color))
+        contrast = opts->target_contrast_hdr;
 
     // Auto mode, use target value if available
-    if (!opts->target_contrast) {
+    if (!contrast) {
         color->hdr.min_luma = min_luma;
         return;
     }
 
     // Infinite contrast
-    if (opts->target_contrast == -1) {
+    if (contrast == -1) {
         color->hdr.min_luma = 1e-7;
         mp_assert(color->hdr.min_luma > 0);
         return;
@@ -938,7 +942,7 @@ static void apply_target_contrast(struct priv *p, struct pl_color_space *color, 
         .out_max = &color->hdr.max_luma
     ));
 
-    color->hdr.min_luma = color->hdr.max_luma / opts->target_contrast;
+    color->hdr.min_luma = color->hdr.max_luma / contrast;
 }
 
 static void apply_target_options(struct priv *p, struct pl_frame *target,
